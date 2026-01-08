@@ -7,16 +7,14 @@
     <meta name="theme-color" content="#87CEEB">
     <title>萌宠合成大进化 (Pet Merge Evolution)</title>
     
-    <!-- 字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 
-    <!-- 广告 SDK (Yandex) -->
+    <!-- 广告 SDK -->
     <script async src="https://yandex.ru/games/sdk/v2"></script>
 
     <style>
-        /* --- 全局样式 --- */
         :root {
             --bg-hue: 200; 
             --bg-gradient: radial-gradient(circle at center, hsl(var(--bg-hue), 70%, 80%), hsl(var(--bg-hue), 60%, 50%));
@@ -29,11 +27,11 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100dvh; /* 完美适配手机高度 */
+            height: 100dvh;
             overflow: hidden;
             background: var(--bg-gradient);
             font-family: 'Fredoka One', cursive;
-            touch-action: none; /* 禁止系统缩放和滚动 */
+            touch-action: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             transition: background 1s ease;
@@ -50,16 +48,143 @@
             position: relative;
         }
 
-        /* --- 拖拽代理层 (用于显示跟随手指的物体) --- */
+        /* --- 教程按钮 (左上角) --- */
+        #btn-tutorial {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 12px;
+            border: 3px solid #2f3542;
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 0 #2f3542;
+            transition: transform 0.1s;
+        }
+        #btn-tutorial:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #2f3542;
+        }
+
+        /* --- 教程模态框 --- */
+        #tutorial-modal {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+            display: none; /* 默认隐藏 */
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .tutorial-card {
+            background: #fff;
+            width: 85%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 4px solid #2f3542;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .tutorial-title {
+            font-size: 32px;
+            color: #ff4757;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #2f3542;
+        }
+        .tutorial-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 16px;
+            color: #2f3542;
+            line-height: 1.4;
+        }
+        .step-icon {
+            font-size: 24px;
+            width: 40px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        .btn-close-tutorial {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-bottom: 4px solid #218c74;
+            font-family: 'Fredoka One', cursive;
+        }
+        .btn-close-tutorial:active {
+            transform: translateY(4px);
+            border-bottom: 0;
+        }
+
+        /* --- 礼物飞行层 (DOM) --- */
+        #gift-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; /* 允许点击穿透 */
+            z-index: 80; /* 在 UI 之下，Canvas 之上 */
+            overflow: hidden;
+        }
+        .flying-gift {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #ff4757;
+            border: 3px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            pointer-events: auto; /* 礼物本身可点击 */
+            cursor: pointer;
+            transition: transform 0.1s;
+            animation: wobble 2s infinite ease-in-out;
+        }
+        .flying-gift::after {
+            content: '';
+            position: absolute;
+            width: 100%; height: 10px;
+            background: #ffd32a;
+            top: 25px;
+        }
+        .flying-gift::before {
+            content: '';
+            position: absolute;
+            height: 100%; width: 10px;
+            background: #ffd32a;
+            left: 25px;
+        }
+        @keyframes wobble { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+        /* --- 拖拽代理 --- */
         #drag-proxy {
             position: absolute;
             top: 0; left: 0;
             width: 80px; height: 80px;
-            pointer-events: none; /* 关键：让点击事件穿透 */
+            pointer-events: none;
             z-index: 100;
             display: none;
             filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
-            transform: scale(1.2); /* 拖拽时稍微放大 */
+            transform: scale(1.2);
         }
         #drag-proxy img { width: 100%; height: 100%; }
 
@@ -68,11 +193,15 @@
             flex: 0 0 auto;
             width: 90%;
             margin: 10px auto;
+            /* 给左侧教程按钮留空位，右对齐 stats */
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end; 
             align-items: center;
             z-index: 10;
+            gap: 10px;
+            pointer-events: none; /* 让教程按钮能被点到 */
         }
+        .top-bar > * { pointer-events: auto; }
 
         .stat-box {
             background: var(--glass-bg);
@@ -106,10 +235,10 @@
             touch-action: none;
         }
 
-        /* --- 底部垃圾桶 (隐藏式) --- */
+        /* --- 底部垃圾桶 --- */
         #trash-bar {
             position: absolute;
-            bottom: -120px; /* 默认隐藏在屏幕外 */
+            bottom: -120px;
             left: 0;
             width: 100%;
             height: 120px;
@@ -138,7 +267,7 @@
         .trash-icon { font-size: 36px; animation: bounce 1s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        /* --- 底部控制按钮 --- */
+        /* --- 底部按钮 --- */
         .bottom-controls {
             flex: 0 0 auto;
             width: 100%;
@@ -280,6 +409,9 @@
             80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
             100% { transform: translate(-50%, -150%) scale(0.8); opacity: 0; }
         }
+        @keyframes popIn {
+            0% { transform: scale(0); } 100% { transform: scale(1); }
+        }
         @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes scalePulse { from { transform: scale(1); } to { transform: scale(1.1); } }
         
@@ -299,13 +431,19 @@
 <body>
 
     <div id="game-container">
+        <!-- 教程按钮 -->
+        <div id="btn-tutorial">📖</div>
+
+        <!-- 礼物飞行层 -->
+        <div id="gift-layer"></div>
+
         <!-- 狂热模式特效层 -->
         <div class="frenzy-overlay" id="frenzy-fx"></div>
         
-        <!-- 拖拽代理 (隐藏的，跟随手指) -->
+        <!-- 拖拽代理 -->
         <div id="drag-proxy"><img id="proxy-img"></div>
         
-        <!-- 底部垃圾桶 (滑出式) -->
+        <!-- 底部垃圾桶 -->
         <div id="trash-bar">
             <div class="trash-content">
                 <span class="trash-icon">🗑️</span>
@@ -338,6 +476,30 @@
                 🤖
                 <div class="cooldown-overlay" id="cd-auto"></div>
             </button>
+        </div>
+    </div>
+
+    <!-- 教程模态框 (英文版) -->
+    <div id="tutorial-modal">
+        <div class="tutorial-card">
+            <div class="tutorial-title">How to Play</div>
+            <div class="tutorial-step">
+                <span class="step-icon">🥚</span>
+                <span><b>Buy Eggs</b><br>Spend coins to spawn new pets.</span>
+            </div>
+            <div class="tutorial-step">
+                <span class="step-icon">✨</span>
+                <span><b>Merge</b><br>Drag identical pets together to evolve them into stronger ones!</span>
+            </div>
+            <div class="tutorial-step">
+                <span class="step-icon">💰</span>
+                <span><b>Earn Money</b><br>Pets generate coins automatically. Higher levels earn more!</span>
+            </div>
+            <div class="tutorial-step">
+                <span class="step-icon">🗑️</span>
+                <span><b>Sell</b><br>Drag unwanted pets to the bottom trash bin to sell them.</span>
+            </div>
+            <button class="btn-close-tutorial" id="btn-close-tutorial">GOT IT!</button>
         </div>
     </div>
 
@@ -529,9 +691,11 @@ class GameEngine {
         this.bottomBar = document.getElementById('bottom-bar');
         this.dragProxy = document.getElementById('drag-proxy');
         this.proxyImg = document.getElementById('proxy-img');
+        this.giftLayer = document.getElementById('gift-layer');
         
         this.lastTime = 0;
         this.isRunning = false;
+        this.isPaused = false; // 教程暂停状态
         
         this.gridSize = 4;
         this.slots = [];
@@ -544,7 +708,6 @@ class GameEngine {
         
         this.particles = [];
         this.floatingTexts = [];
-        this.giftBox = null; 
         this.giftTimer = 0;
         this.frenzyMode = false;
         this.frenzyTimer = 0;
@@ -588,6 +751,20 @@ class GameEngine {
         document.getElementById('btn-ad-speed').onclick = () => this.triggerAdEffect('speed', () => this.boostSpeed());
         document.getElementById('btn-ad-auto').onclick = () => this.triggerAdEffect('auto', () => this.autoMerge());
         
+        // 教程逻辑
+        const btnTutorial = document.getElementById('btn-tutorial');
+        const tutorialModal = document.getElementById('tutorial-modal');
+        const btnCloseTutorial = document.getElementById('btn-close-tutorial');
+        
+        btnTutorial.onclick = () => {
+            tutorialModal.style.display = 'flex';
+            this.pauseGame();
+        };
+        btnCloseTutorial.onclick = () => {
+            tutorialModal.style.display = 'none';
+            this.resumeGame();
+        };
+        
         const initAudio = () => { audio.init(); window.removeEventListener('click', initAudio); window.removeEventListener('touchstart', initAudio); };
         window.addEventListener('click', initAudio);
         window.addEventListener('touchstart', initAudio);
@@ -605,6 +782,7 @@ class GameEngine {
         });
     }
     updateCooldowns() {
+        if (this.isPaused) return;
         for(let key in this.cooldowns) {
             if(this.cooldowns[key] > 0) {
                 this.cooldowns[key] -= 0.1;
@@ -652,8 +830,15 @@ class GameEngine {
         setInterval(() => this.saveGame(), 5000);
     }
 
-    pauseGame() { this.isRunning = false; }
-    resumeGame() { if(!this.isRunning) { this.isRunning = true; this.lastTime = performance.now(); requestAnimationFrame(this.loop); } }
+    pauseGame() { this.isPaused = true; }
+    resumeGame() { 
+        this.isPaused = false; 
+        if(!this.isRunning) { 
+            this.isRunning = true; 
+            this.lastTime = performance.now(); 
+            requestAnimationFrame(this.loop); 
+        } 
+    }
 
     resize() {
         const wrapper = document.getElementById('canvas-wrapper');
@@ -693,6 +878,7 @@ class GameEngine {
     }
 
     buyEgg() {
+        if(this.isPaused) return;
         const cost = this.getCost();
         if(this.coins >= cost) {
             const emptyIdx = this.slots.findIndex(s => s === null);
@@ -720,7 +906,7 @@ class GameEngine {
     countMonsters() { return this.slots.filter(s => s !== null).length; }
 
     generateIncome() {
-        if(!this.isRunning) return;
+        if(!this.isRunning || this.isPaused) return;
         let total = 0;
         const multiplier = this.frenzyMode ? 5 : 1;
         this.slots.forEach((s, i) => {
@@ -793,29 +979,29 @@ class GameEngine {
         }
     }
 
+    // [MOD] DOM 礼物系统
     spawnGift() {
-        if(this.giftBox) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const y = Math.random() * (rect.height - 150) + 50;
-        this.giftBox = { x: -60, y: y / dpr, size: 50, speed: (1.5 + Math.random()) * 0.8, angle: 0 };
-    }
-    updateGift() {
-        this.giftTimer++;
-        if(this.giftTimer > 1000) { this.giftTimer = 0; if(Math.random() > 0.4) this.spawnGift(); }
-        if(this.giftBox) {
-            this.giftBox.x += this.giftBox.speed;
-            this.giftBox.angle += 0.03;
-            const rect = this.canvas.getBoundingClientRect();
-            if(this.giftBox.x > (rect.width / (window.devicePixelRatio || 1)) + 60) this.giftBox = null;
-        }
-    }
-    checkGiftClick(x, y) {
-        if(!this.giftBox) return false;
-        const g = this.giftBox;
-        const dist = Math.sqrt(Math.pow(x - g.x, 2) + Math.pow(y - g.y, 2));
-        if(dist < 40) {
+        // 创建礼物元素
+        const gift = document.createElement('div');
+        gift.className = 'flying-gift';
+        gift.innerText = '🎁';
+        
+        // 随机高度 (5% ~ 60% 屏幕高度)
+        const top = 5 + Math.random() * 55;
+        gift.style.top = top + '%';
+        gift.style.left = '-100px';
+        
+        // 速度
+        const speed = 2 + Math.random() * 2;
+        
+        // 数据绑定到元素
+        gift.dataset.x = -100;
+        gift.dataset.speed = speed;
+        
+        // 点击事件
+        gift.onclick = () => {
             audio.play('levelup'); 
+            // 奖励逻辑
             if(Math.random() > 0.7) {
                 this.frenzyMode = true;
                 this.frenzyTimer = 10; 
@@ -826,10 +1012,42 @@ class GameEngine {
                 this.coins += reward;
                 this.addFloatingText(-1, `+${formatNumber(reward)}`, '#2ed573');
             }
-            this.giftBox = null;
-            return true;
+            // 移除礼物
+            if(gift.parentNode) gift.parentNode.removeChild(gift);
+        };
+        
+        this.giftLayer.appendChild(gift);
+    }
+
+    updateGift() {
+        if (this.isPaused) return;
+        
+        // 礼物生成控制
+        this.giftTimer++;
+        if(this.giftTimer > 1000) { 
+            this.giftTimer = 0; 
+            if(Math.random() > 0.4) this.spawnGift(); 
         }
-        return false;
+        
+        // 移动所有礼物
+        const gifts = document.getElementsByClassName('flying-gift');
+        const screenW = window.innerWidth;
+        
+        for (let i = 0; i < gifts.length; i++) {
+            const gift = gifts[i];
+            let x = parseFloat(gift.dataset.x);
+            let speed = parseFloat(gift.dataset.speed);
+            
+            x += speed;
+            gift.dataset.x = x;
+            gift.style.transform = `translateX(${x}px) rotate(${Math.sin(x*0.05)*5}deg)`; // 增加摆动
+            
+            // 超出屏幕移除
+            if (x > screenW + 100) {
+                gift.parentNode.removeChild(gift);
+                i--; // 调整索引
+            }
+        }
     }
 
     getSlotAt(x, y) {
@@ -847,15 +1065,13 @@ class GameEngine {
     }
 
     handleInputDown(e) {
-        if(!this.isRunning) return;
+        if(!this.isRunning || this.isPaused) return;
         if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
 
         const rect = this.canvas.getBoundingClientRect();
         const relX = e.clientX - rect.left;
         const relY = e.clientY - rect.top;
         
-        if(this.checkGiftClick(relX, relY)) return;
-
         const idx = this.getSlotAt(e.clientX, e.clientY);
         if(idx !== -1 && this.slots[idx]) {
             this.dragOriginIndex = idx;
@@ -962,7 +1178,9 @@ class GameEngine {
         if(!this.isRunning) return;
         const dt = timestamp - this.lastTime;
         this.lastTime = timestamp;
-        this.update(dt);
+        if(!this.isPaused) {
+            this.update(dt);
+        }
         this.draw();
         requestAnimationFrame(this.loop);
     }
@@ -985,8 +1203,6 @@ class GameEngine {
         }
         
         this.slots.forEach((s, i) => { if(s && s.visible) { const {x, y} = this.getSlotPos(i); this.drawMonster(s, x, y); } });
-        
-        this.drawGift(); 
         
         this.particles.forEach(p => { this.ctx.fillStyle = p.color; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); this.ctx.fill(); });
         this.ctx.font = 'bold 24px "Fredoka One"'; this.ctx.textAlign = 'center';
@@ -1011,18 +1227,6 @@ class GameEngine {
         this.ctx.fillStyle = 'rgba(0,0,0,0.15)';
         this.ctx.beginPath(); this.ctx.ellipse(0, size/2 + 5, size/2, size/6, 0, 0, Math.PI*2); this.ctx.fill();
         if(img) { try { this.ctx.drawImage(img, -size/2, -size/2, size, size); } catch(e){} }
-        this.ctx.restore();
-    }
-    
-    drawGift() {
-        if(!this.giftBox) return;
-        const g = this.giftBox;
-        this.ctx.save();
-        this.ctx.translate(g.x, g.y);
-        this.ctx.rotate(Math.sin(g.angle) * 0.2);
-        this.ctx.shadowBlur = 10; this.ctx.shadowColor = 'white';
-        this.ctx.fillStyle = '#ff4757'; this.ctx.fillRect(-20, -20, 40, 40);
-        this.ctx.fillStyle = '#ffd32a'; this.ctx.fillRect(-5, -20, 10, 40); this.ctx.fillRect(-20, -5, 40, 10);
         this.ctx.restore();
     }
 
