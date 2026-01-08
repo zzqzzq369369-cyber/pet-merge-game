@@ -11,10 +11,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 
-    <!-- 广告 SDK -->
+    <!-- 广告 SDK (Yandex) -->
     <script async src="https://yandex.ru/games/sdk/v2"></script>
 
     <style>
+        /* --- 全局样式 --- */
         :root {
             --bg-hue: 200; 
             --bg-gradient: radial-gradient(circle at center, hsl(var(--bg-hue), 70%, 80%), hsl(var(--bg-hue), 60%, 50%));
@@ -27,13 +28,18 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100dvh;
+            height: 100dvh; /* 完美适配手机高度 */
             overflow: hidden;
             background: var(--bg-gradient);
             font-family: 'Fredoka One', cursive;
+            
+            /* [WeChat Fix] 微信核心适配：禁止长按菜单、禁止选择、禁止回弹 */
             touch-action: none;
             user-select: none;
+            -webkit-user-select: none; /* Safari/Chrome */
+            -webkit-touch-callout: none; /* iOS Safari/WeChat 禁止长按菜单 */
             -webkit-tap-highlight-color: transparent;
+            
             transition: background 1s ease;
         }
 
@@ -428,7 +434,7 @@
         @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <!-- [WeChat] 禁止长按菜单 -->
 
     <div id="game-container">
         <!-- 教程按钮 -->
@@ -521,8 +527,24 @@ class AudioManager {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) this.ctx = new AudioContext();
         }
+        
+        // [WeChat Fix] 微信专用：Audio解锁逻辑
+        const resume = () => {
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        };
+        
+        // 尝试立即恢复
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        
+        // 监听各种用户交互以解锁音频
+        document.addEventListener('click', resume, {once:true});
+        document.addEventListener('touchstart', resume, {once:true});
+        // 微信特有事件
+        document.addEventListener("WeixinJSBridgeReady", resume, false);
     }
+    
     play(type) {
         if (!this.enabled || !this.ctx) return;
         const t = this.ctx.currentTime;
@@ -765,9 +787,8 @@ class GameEngine {
             this.resumeGame();
         };
         
-        const initAudio = () => { audio.init(); window.removeEventListener('click', initAudio); window.removeEventListener('touchstart', initAudio); };
-        window.addEventListener('click', initAudio);
-        window.addEventListener('touchstart', initAudio);
+        // [WeChat] 初始化时尝试解锁音频
+        audio.init();
 
         for(let i=0; i<this.gridSize*this.gridSize; i++) this.slots.push(null);
         setInterval(() => this.updateCooldowns(), 100);
