@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Pet Merge Evolution - Merge, Evolve, and Collect!">
     <meta name="theme-color" content="#87CEEB">
-    <title>萌宠合成大进化 (Pet Merge Evolution)</title>
+    <title>Pet Merge Evolution</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 
-    <!-- 广告 SDK (Yandex) -->
+    <!-- Ad SDK (Yandex) -->
     <script async src="https://yandex.ru/games/sdk/v2"></script>
 
     <style>
-        /* --- 全局样式 --- */
+        /* --- Global Styles --- */
         :root {
             --bg-hue: 200; 
             --bg-gradient: radial-gradient(circle at center, hsl(var(--bg-hue), 70%, 80%), hsl(var(--bg-hue), 60%, 50%));
@@ -28,18 +28,15 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100dvh; /* 完美适配手机高度 */
+            height: 100dvh;
             overflow: hidden;
             background: var(--bg-gradient);
             font-family: 'Fredoka One', cursive;
-            
-            /* [WeChat Fix] 微信核心适配：禁止长按菜单、禁止选择、禁止回弹 */
             touch-action: none;
             user-select: none;
-            -webkit-user-select: none; /* Safari/Chrome */
-            -webkit-touch-callout: none; /* iOS Safari/WeChat 禁止长按菜单 */
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
-            
             transition: background 1s ease;
         }
 
@@ -54,7 +51,66 @@
             position: relative;
         }
 
-        /* --- 教程按钮 (左上角) --- */
+        /* --- Toast Message --- */
+        #toast-msg {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+        #toast-msg.show { opacity: 1; }
+
+        /* --- Drag Proxy --- */
+        #drag-proxy {
+            position: absolute;
+            top: 0; left: 0;
+            width: 80px; height: 80px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+            transform: scale(1.2);
+        }
+        #drag-proxy img { width: 100%; height: 100%; }
+
+        /* --- UI Top Bar --- */
+        .top-bar {
+            flex: 0 0 auto;
+            width: 90%;
+            margin: 10px auto;
+            display: flex;
+            justify-content: flex-end; 
+            align-items: center;
+            z-index: 10;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .top-bar > * { pointer-events: auto; }
+
+        .stat-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px var(--shadow-color);
+        }
+
+        /* --- Tutorial Button --- */
         #btn-tutorial {
             position: absolute;
             top: 20px;
@@ -73,156 +129,9 @@
             box-shadow: 0 4px 0 #2f3542;
             transition: transform 0.1s;
         }
-        #btn-tutorial:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #2f3542;
-        }
+        #btn-tutorial:active { transform: translateY(4px); box-shadow: 0 0 0 #2f3542; }
 
-        /* --- 教程模态框 --- */
-        #tutorial-modal {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 999;
-            display: none; /* 默认隐藏 */
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-        .tutorial-card {
-            background: #fff;
-            width: 85%;
-            max-width: 400px;
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 4px solid #2f3542;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .tutorial-title {
-            font-size: 32px;
-            color: #ff4757;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 0 #2f3542;
-        }
-        .tutorial-step {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            text-align: left;
-            font-size: 16px;
-            color: #2f3542;
-            line-height: 1.4;
-        }
-        .step-icon {
-            font-size: 24px;
-            width: 40px;
-            text-align: center;
-            margin-right: 10px;
-        }
-        .btn-close-tutorial {
-            background: #2ed573;
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            font-size: 20px;
-            border-radius: 10px;
-            margin-top: 10px;
-            cursor: pointer;
-            border-bottom: 4px solid #218c74;
-            font-family: 'Fredoka One', cursive;
-        }
-        .btn-close-tutorial:active {
-            transform: translateY(4px);
-            border-bottom: 0;
-        }
-
-        /* --- 礼物飞行层 (DOM) --- */
-        #gift-layer {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; /* 允许点击穿透 */
-            z-index: 80; /* 在 UI 之下，Canvas 之上 */
-            overflow: hidden;
-        }
-        .flying-gift {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: #ff4757;
-            border: 3px solid #fff;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            pointer-events: auto; /* 礼物本身可点击 */
-            cursor: pointer;
-            transition: transform 0.1s;
-            animation: wobble 2s infinite ease-in-out;
-        }
-        .flying-gift::after {
-            content: '';
-            position: absolute;
-            width: 100%; height: 10px;
-            background: #ffd32a;
-            top: 25px;
-        }
-        .flying-gift::before {
-            content: '';
-            position: absolute;
-            height: 100%; width: 10px;
-            background: #ffd32a;
-            left: 25px;
-        }
-        @keyframes wobble { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
-
-        /* --- 拖拽代理 --- */
-        #drag-proxy {
-            position: absolute;
-            top: 0; left: 0;
-            width: 80px; height: 80px;
-            pointer-events: none;
-            z-index: 100;
-            display: none;
-            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
-            transform: scale(1.2);
-        }
-        #drag-proxy img { width: 100%; height: 100%; }
-
-        /* --- UI 顶部栏 --- */
-        .top-bar {
-            flex: 0 0 auto;
-            width: 90%;
-            margin: 10px auto;
-            /* 给左侧教程按钮留空位，右对齐 stats */
-            display: flex;
-            justify-content: flex-end; 
-            align-items: center;
-            z-index: 10;
-            gap: 10px;
-            pointer-events: none; /* 让教程按钮能被点到 */
-        }
-        .top-bar > * { pointer-events: auto; }
-
-        .stat-box {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 2px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 8px 16px;
-            color: white;
-            font-size: 20px;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-            box-shadow: 0 4px 10px var(--shadow-color);
-        }
-
-        /* --- 游戏主画布 --- */
+        /* --- Canvas Wrapper --- */
         #canvas-wrapper {
             flex: 1 1 auto;
             position: relative;
@@ -232,7 +141,6 @@
             align-items: center;
             overflow: hidden;
         }
-
         canvas {
             display: block;
             border-radius: 16px;
@@ -241,7 +149,7 @@
             touch-action: none;
         }
 
-        /* --- 底部垃圾桶 --- */
+        /* --- Bottom Trash Bar --- */
         #trash-bar {
             position: absolute;
             bottom: -120px;
@@ -273,7 +181,7 @@
         .trash-icon { font-size: 36px; animation: bounce 1s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        /* --- 底部按钮 --- */
+        /* --- Bottom Controls --- */
         .bottom-controls {
             flex: 0 0 auto;
             width: 100%;
@@ -286,11 +194,7 @@
             z-index: 10;
             transition: opacity 0.2s, transform 0.2s;
         }
-        .bottom-controls.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(50px);
-        }
+        .bottom-controls.hidden { opacity: 0; pointer-events: none; transform: translateY(50px); }
 
         .btn-main {
             background: #FFD700;
@@ -338,59 +242,53 @@
         .btn-speed { background: #3742fa; }
         .btn-auto { background: #ff4757; }
 
+        /* --- Gift Layer --- */
+        #gift-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 80; overflow: hidden;
+        }
+        .flying-gift {
+            position: absolute; width: 60px; height: 60px;
+            background: #ff4757; border: 3px solid #fff; border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px; pointer-events: auto; cursor: pointer;
+            animation: wobble 2s infinite ease-in-out;
+        }
+        .flying-gift::after { content: ''; position: absolute; width: 100%; height: 10px; background: #ffd32a; top: 25px; }
+        .flying-gift::before { content: ''; position: absolute; height: 100%; width: 10px; background: #ffd32a; left: 25px; }
+        @keyframes wobble { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+        /* --- Tutorial Modal --- */
+        #tutorial-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 999; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .tutorial-card {
+            background: #fff; width: 85%; max-width: 400px; border-radius: 20px; padding: 20px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 4px solid #2f3542;
+            animation: popIn 0.3s ease;
+        }
+        .tutorial-step { display: flex; align-items: center; margin-bottom: 15px; text-align: left; font-size: 16px; color: #2f3542; }
+        .step-icon { font-size: 24px; width: 40px; text-align: center; margin-right: 10px; }
+        .btn-close-tutorial { background: #2ed573; color: white; border: none; padding: 10px 30px; font-size: 20px; border-radius: 10px; cursor: pointer; border-bottom: 4px solid #218c74; }
+        
         /* --- Loading --- */
         #loading-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #2f3542;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            color: white;
-            transition: opacity 0.5s;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2f3542; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 999; color: white; transition: opacity 0.5s;
         }
-        .loader {
-            width: 48px; height: 48px;
-            border: 5px solid #FFF;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            animation: rotation 1s linear infinite;
-        }
+        .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
         
-        /* --- 特效层 --- */
-        .celebration-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 50px;
-            color: #fff;
-            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
-            pointer-events: none;
-            opacity: 0;
-            animation: popUp 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            z-index: 50;
-            text-align: center;
-            white-space: nowrap;
-        }
-        .celebration-sub {
-            font-size: 30px;
-            color: #FFD700;
-            text-shadow: 2px 2px 0 #000;
-            margin-top: 10px;
-        }
-        
-        /* 破纪录遮罩 */
+        /* --- New Record FX --- */
         .record-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -398,66 +296,59 @@
             z-index: 900;
             pointer-events: none;
             opacity: 0;
-            animation: fadeInOut 3s forwards;
+            animation: fadeInOut 3.5s forwards;
         }
         .record-title {
-            font-size: 60px;
+            font-size: 50px;
             background: linear-gradient(to bottom, #FFD700, #FFA500);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 0 20px rgba(255,215,0,0.8));
             animation: scalePulse 0.5s infinite alternate;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .record-sub {
+            font-size: 30px;
+            color: #fff;
+            margin-top: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
-        @keyframes popUp {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -150%) scale(0.8); opacity: 0; }
+        @keyframes fadeInOut { 
+            0% { opacity: 0; transform: scale(0.8); } 
+            10% { opacity: 1; transform: scale(1); } 
+            90% { opacity: 1; transform: scale(1); } 
+            100% { opacity: 0; transform: scale(1.2); } 
         }
-        @keyframes popIn {
-            0% { transform: scale(0); } 100% { transform: scale(1); }
-        }
-        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes scalePulse { from { transform: scale(1); } to { transform: scale(1.1); } }
         
         .frenzy-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle, transparent 50%, rgba(255, 215, 0, 0.3) 100%);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s;
-            z-index: 5;
-            animation: pulse 0.5s infinite;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 5; animation: pulse 0.5s infinite;
         }
         @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 0.5; } 100% { opacity: 0.2; } }
     </style>
 </head>
-<body oncontextmenu="return false;"> <!-- [WeChat] 禁止长按菜单 -->
+<body oncontextmenu="return false;">
 
     <div id="game-container">
-        <!-- 教程按钮 -->
-        <div id="btn-tutorial">📖</div>
-
-        <!-- 礼物飞行层 -->
-        <div id="gift-layer"></div>
-
-        <!-- 狂热模式特效层 -->
+        <div id="toast-msg">Notification</div>
         <div class="frenzy-overlay" id="frenzy-fx"></div>
-        
-        <!-- 拖拽代理 -->
         <div id="drag-proxy"><img id="proxy-img"></div>
         
-        <!-- 底部垃圾桶 -->
         <div id="trash-bar">
             <div class="trash-content">
                 <span class="trash-icon">🗑️</span>
-                <span>拖拽出售 (Sell)</span>
+                <span>Drag to Sell</span>
             </div>
         </div>
 
         <div class="top-bar">
+            <!-- Tutorial -->
+            <div id="btn-tutorial">📖</div>
+            <div style="flex:1"></div>
             <div class="stat-box" id="level-display">Max Lvl 1</div>
             <div class="stat-box" id="coin-display">💰 0</div>
         </div>
@@ -465,9 +356,12 @@
         <div id="canvas-wrapper">
             <canvas id="gameCanvas"></canvas>
         </div>
+        
+        <!-- Gift Layer -->
+        <div id="gift-layer"></div>
 
         <div class="bottom-controls" id="bottom-bar">
-            <button class="btn-small btn-speed" id="btn-ad-speed" title="加速 (Speed)">
+            <button class="btn-small btn-speed" id="btn-ad-speed" title="Speed">
                 ⚡
                 <div class="cooldown-overlay" id="cd-speed"></div>
             </button>
@@ -478,38 +372,25 @@
                 <span class="btn-sub-text" id="buy-level-text">Lvl 1</span>
             </button>
             
-            <button class="btn-small btn-auto" id="btn-ad-auto" title="自动 (Auto)">
+            <button class="btn-small btn-auto" id="btn-ad-auto" title="Auto">
                 🤖
                 <div class="cooldown-overlay" id="cd-auto"></div>
             </button>
         </div>
     </div>
 
-    <!-- 教程模态框 (英文版) -->
+    <!-- Tutorial Modal -->
     <div id="tutorial-modal">
         <div class="tutorial-card">
             <div class="tutorial-title">How to Play</div>
-            <div class="tutorial-step">
-                <span class="step-icon">🥚</span>
-                <span><b>Buy Eggs</b><br>Spend coins to spawn new pets.</span>
-            </div>
-            <div class="tutorial-step">
-                <span class="step-icon">✨</span>
-                <span><b>Merge</b><br>Drag identical pets together to evolve them into stronger ones!</span>
-            </div>
-            <div class="tutorial-step">
-                <span class="step-icon">💰</span>
-                <span><b>Earn Money</b><br>Pets generate coins automatically. Higher levels earn more!</span>
-            </div>
-            <div class="tutorial-step">
-                <span class="step-icon">🗑️</span>
-                <span><b>Sell</b><br>Drag unwanted pets to the bottom trash bin to sell them.</span>
-            </div>
+            <div class="tutorial-step"><span class="step-icon">🥚</span><span><b>Buy Eggs</b><br>Spend coins to spawn new pets.</span></div>
+            <div class="tutorial-step"><span class="step-icon">✨</span><span><b>Merge</b><br>Drag identical pets together to evolve!</span></div>
+            <div class="tutorial-step"><span class="step-icon">💰</span><span><b>Earn</b><br>Pets generate coins automatically.</span></div>
+            <div class="tutorial-step"><span class="step-icon">🗑️</span><span><b>Sell</b><br>Drag pets to the bottom red bar.</span></div>
             <button class="btn-close-tutorial" id="btn-close-tutorial">GOT IT!</button>
         </div>
     </div>
 
-    <!-- 加载界面 -->
     <div id="loading-screen">
         <div class="loader"></div>
         <h2 style="margin-top:20px;">LOADING...</h2>
@@ -517,9 +398,14 @@
     </div>
 
 <script>
-/**
- * AUDIO MANAGER - 程序化音效
- */
+// --- UI Helpers ---
+const toast = (msg) => {
+    const el = document.getElementById('toast-msg');
+    el.innerText = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+};
+
 class AudioManager {
     constructor() { this.ctx = null; this.enabled = true; }
     init() {
@@ -527,50 +413,23 @@ class AudioManager {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) this.ctx = new AudioContext();
         }
-        
-        // [WeChat Fix] 微信专用：Audio解锁逻辑
-        const resume = () => {
-            if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume();
-            }
-        };
-        
-        // 尝试立即恢复
+        const resume = () => { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); };
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-        
-        // 监听各种用户交互以解锁音频
         document.addEventListener('click', resume, {once:true});
         document.addEventListener('touchstart', resume, {once:true});
-        // 微信特有事件
         document.addEventListener("WeixinJSBridgeReady", resume, false);
     }
-    
     play(type) {
         if (!this.enabled || !this.ctx) return;
         const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
         osc.connect(gain); gain.connect(this.ctx.destination);
         switch (type) {
-            case 'buy': 
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t+0.1);
-                gain.gain.setValueAtTime(0.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1);
-                break;
-            case 'merge': 
-                osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(600, t+0.1);
-                gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
-                break;
-            case 'coin': 
-                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, t);
-                gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1);
-                break;
-            case 'trash': 
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.linearRampToValueAtTime(50, t+0.2);
-                gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
-                break;
-            case 'levelup': 
-                this.playTone(440, 'square', 0.1, 0); this.playTone(554, 'square', 0.1, 0.1); this.playTone(659, 'square', 0.3, 0.2);
-                break;
+            case 'buy': osc.type = 'triangle'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t+0.1); gain.gain.setValueAtTime(0.5, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); break;
+            case 'merge': osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(600, t+0.1); gain.gain.setValueAtTime(0.3, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2); break;
+            case 'coin': osc.type = 'sine'; osc.frequency.setValueAtTime(1200, t); gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.1); osc.start(t); osc.stop(t+0.1); break;
+            case 'trash': osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.linearRampToValueAtTime(50, t+0.2); gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2); break;
+            case 'levelup': this.playTone(440, 'square', 0.1, 0); this.playTone(554, 'square', 0.1, 0.1); this.playTone(659, 'square', 0.3, 0.2); break;
             case 'record': 
                 this.playTone(523, 'triangle', 0.1, 0); this.playTone(659, 'triangle', 0.1, 0.1); 
                 this.playTone(784, 'triangle', 0.1, 0.2); this.playTone(1046, 'triangle', 0.6, 0.3);
@@ -586,7 +445,6 @@ class AudioManager {
 }
 const audio = new AudioManager();
 
-// SDK Manager (Standard)
 class SDKManager {
     constructor() { this.ysdk = null; this.player = null; this.isMock = false; }
     async init() {
@@ -602,8 +460,7 @@ class SDKManager {
         } catch (e) {
             console.warn('[SDK] Mock Mode Active');
             this.isMock = true;
-            const msg = document.getElementById('loading-msg');
-            if(msg) msg.innerText = "Offline Mode";
+            document.getElementById('loading-msg').innerText = "Ready!";
         }
         this.removeLoadingScreen();
     }
@@ -636,60 +493,61 @@ class SDKManager {
     }
     showRewarded(cb = () => {}) {
         if (typeof cb !== 'function') cb = () => {};
-        if (this.isMock || !this.ysdk) { cb(); return; }
+        
+        const safeCallback = () => {
+            this.notifyGameplayStart(); 
+            window.gameEngine?.resumeGame(); 
+            cb();
+        };
+
+        if (this.isMock || !this.ysdk) { 
+            console.log("Mock Rewarded");
+            setTimeout(safeCallback, 500);
+            return; 
+        }
+        
         try {
             this.notifyGameplayStop(); window.gameEngine?.pauseGame();
             this.ysdk.adv.showRewardedVideo({
-                callbacks: { onRewarded: cb, onClose: () => { this.notifyGameplayStart(); window.gameEngine?.resumeGame(); }, onError: () => { this.notifyGameplayStart(); window.gameEngine?.resumeGame(); } }
+                callbacks: { 
+                    onRewarded: safeCallback,
+                    onClose: () => { this.notifyGameplayStart(); window.gameEngine?.resumeGame(); }, 
+                    onError: () => { 
+                        console.warn("Ad Error, Granting Reward anyway");
+                        safeCallback(); 
+                    } 
+                }
             });
-        } catch(e) { this.notifyGameplayStart(); window.gameEngine?.resumeGame(); }
+        } catch(e) { 
+            console.error("Ad Exception", e);
+            safeCallback(); 
+        }
     }
 }
 const sdk = new SDKManager();
 
-// ASSET MANAGER - 生成矢量图
 const AssetManager = {
-    images: [],
-    urls: [], // 存储 blob URL 供拖拽使用
+    images: [], urls: [],
     generateSVGString(level) {
         const hue = (level * 137.508) % 360; 
-        let shape;
-        const color = `hsl(${hue}, 70%, 60%)`;
-        const stroke = "#2f3542";
-        
-        // 进化逻辑
-        if (level <= 4) {
-            shape = `<circle cx="50" cy="50" r="${35 + level}" fill="${color}" stroke="${stroke}" stroke-width="4"/>`;
-        } else if (level <= 8) {
-            shape = `<rect x="15" y="15" width="70" height="70" rx="20" fill="${color}" stroke="${stroke}" stroke-width="4"/>`;
-        } else if (level <= 12) {
-            shape = `<path d="M50 10 L90 85 L10 85 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
-        } else if (level <= 16) {
-            shape = `<path d="M50 5 L95 38 L79 90 L21 90 L5 38 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
-        } else if (level <= 20) {
-            shape = `<path d="M50 5 L63 35 L95 38 L71 60 L79 90 L50 75 L21 90 L29 60 L5 38 L37 35 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
-        } else {
-            shape = `<path d="M10 30 L30 80 L70 80 L90 30 L70 50 L50 20 L30 50 Z" fill="${color}" stroke="#ffd700" stroke-width="6" stroke-linejoin="round"/>`;
-        }
-
-        const eyeColor = "#fff";
-        const eyes = `<circle cx="35" cy="45" r="6" fill="${eyeColor}"/><circle cx="65" cy="45" r="6" fill="${eyeColor}"/><circle cx="35" cy="45" r="2" fill="#000"/><circle cx="65" cy="45" r="2" fill="#000"/>`;
+        let shape; const color = `hsl(${hue}, 70%, 60%)`; const stroke = "#2f3542";
+        if (level <= 4) shape = `<circle cx="50" cy="50" r="${35 + level}" fill="${color}" stroke="${stroke}" stroke-width="4"/>`;
+        else if (level <= 8) shape = `<rect x="15" y="15" width="70" height="70" rx="20" fill="${color}" stroke="${stroke}" stroke-width="4"/>`;
+        else if (level <= 12) shape = `<path d="M50 10 L90 85 L10 85 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
+        else if (level <= 16) shape = `<path d="M50 5 L95 38 L79 90 L21 90 L5 38 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
+        else if (level <= 20) shape = `<path d="M50 5 L63 35 L95 38 L71 60 L79 90 L50 75 L21 90 L29 60 L5 38 L37 35 Z" fill="${color}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>`;
+        else shape = `<path d="M10 30 L30 80 L70 80 L90 30 L70 50 L50 20 L30 50 Z" fill="${color}" stroke="#ffd700" stroke-width="6" stroke-linejoin="round"/>`;
+        const eyes = `<circle cx="35" cy="45" r="6" fill="#fff"/><circle cx="65" cy="45" r="6" fill="#fff"/><circle cx="35" cy="45" r="2" fill="#000"/><circle cx="65" cy="45" r="2" fill="#000"/>`;
         const badge = `<circle cx="85" cy="85" r="14" fill="#fff" stroke="#000" stroke-width="2"/><text x="85" y="90" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="#000">${level}</text>`;
-
         return `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${shape}${eyes}${badge}</svg>`;
     },
     init() {
-        this.images = [null];
-        this.urls = [null];
+        this.images = [null]; this.urls = [null];
         for(let i=1; i<=30; i++) {
             try {
-                const s = this.generateSVGString(i);
-                const blob = new Blob([s], {type: 'image/svg+xml'});
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.src = url;
-                this.urls.push(url);
-                this.images.push(img);
+                const s = this.generateSVGString(i); const blob = new Blob([s], {type: 'image/svg+xml'});
+                const url = URL.createObjectURL(blob); const img = new Image(); img.src = url;
+                this.urls.push(url); this.images.push(img);
             } catch(e) { this.images.push(null); this.urls.push(''); }
         }
     },
@@ -715,32 +573,16 @@ class GameEngine {
         this.proxyImg = document.getElementById('proxy-img');
         this.giftLayer = document.getElementById('gift-layer');
         
-        this.lastTime = 0;
-        this.isRunning = false;
-        this.isPaused = false; // 教程暂停状态
+        this.lastTime = 0; this.isRunning = false; this.isPaused = false;
+        this.gridSize = 4; this.slots = []; this.coins = 100;
+        this.highestLevel = 1; this.MAX_LEVEL = 30;
         
-        this.gridSize = 4;
-        this.slots = [];
-        this.coins = 100;
-        this.highestLevel = 1;
-        this.MAX_LEVEL = 30;
+        this.draggedMonster = null; this.dragOriginIndex = -1;
+        this.particles = []; this.floatingTexts = [];
+        this.giftTimer = 0; this.frenzyMode = false; this.frenzyTimer = 0;
         
-        this.draggedMonster = null;
-        this.dragOriginIndex = -1;
-        
-        this.particles = [];
-        this.floatingTexts = [];
-        this.giftTimer = 0;
-        this.frenzyMode = false;
-        this.frenzyTimer = 0;
-        
-        this.slotSize = 0;
-        this.padding = 10;
-        this.offsetX = 0;
-        this.offsetY = 0;
-
-        this.cooldowns = { speed: 0, auto: 0 };
-        this.trashHover = false;
+        this.slotSize = 0; this.padding = 10; this.offsetX = 0; this.offsetY = 0;
+        this.cooldowns = { speed: 0, auto: 0 }; this.trashHover = false;
 
         this.loop = this.loop.bind(this);
         this.handleInputDown = this.handleInputDown.bind(this);
@@ -748,20 +590,12 @@ class GameEngine {
         this.handleInputUp = this.handleInputUp.bind(this);
         
         this.resize();
-        if(window.ResizeObserver) {
-            new ResizeObserver(() => this.resize()).observe(document.getElementById('canvas-wrapper'));
-        } else {
-            window.addEventListener('resize', () => this.resize());
-            setInterval(() => this.resize(), 1000);
-        }
+        if(window.ResizeObserver) { new ResizeObserver(() => this.resize()).observe(document.getElementById('canvas-wrapper')); }
+        else { window.addEventListener('resize', () => this.resize()); setInterval(() => this.resize(), 1000); }
         
-        const isTouch = 'ontouchstart' in window;
-        if(isTouch) {
+        if('ontouchstart' in window) {
             this.canvas.addEventListener('touchstart', (e) => this.handleInputDown(e.touches[0]), {passive: false});
-            window.addEventListener('touchmove', (e) => { 
-                if(this.draggedMonster) e.preventDefault(); 
-                this.handleInputMove(e.touches[0]); 
-            }, {passive: false});
+            window.addEventListener('touchmove', (e) => { if(this.draggedMonster) e.preventDefault(); this.handleInputMove(e.touches[0]); }, {passive: false});
             window.addEventListener('touchend', this.handleInputUp);
         } else {
             this.canvas.addEventListener('mousedown', this.handleInputDown);
@@ -773,29 +607,21 @@ class GameEngine {
         document.getElementById('btn-ad-speed').onclick = () => this.triggerAdEffect('speed', () => this.boostSpeed());
         document.getElementById('btn-ad-auto').onclick = () => this.triggerAdEffect('auto', () => this.autoMerge());
         
-        // 教程逻辑
         const btnTutorial = document.getElementById('btn-tutorial');
         const tutorialModal = document.getElementById('tutorial-modal');
         const btnCloseTutorial = document.getElementById('btn-close-tutorial');
+        btnTutorial.onclick = () => { tutorialModal.style.display = 'flex'; this.pauseGame(); };
+        btnCloseTutorial.onclick = () => { tutorialModal.style.display = 'none'; this.resumeGame(); };
         
-        btnTutorial.onclick = () => {
-            tutorialModal.style.display = 'flex';
-            this.pauseGame();
-        };
-        btnCloseTutorial.onclick = () => {
-            tutorialModal.style.display = 'none';
-            this.resumeGame();
-        };
-        
-        // [WeChat] 初始化时尝试解锁音频
         audio.init();
-
         for(let i=0; i<this.gridSize*this.gridSize; i++) this.slots.push(null);
         setInterval(() => this.updateCooldowns(), 100);
     }
 
     triggerAdEffect(type, callback) {
-        if(this.cooldowns[type] > 0) return; 
+        audio.play('buy'); // SFX
+        if(this.cooldowns[type] > 0) return;
+        toast("Loading Ad..."); 
         sdk.showRewarded(() => {
             callback();
             this.cooldowns[type] = 15;
@@ -805,28 +631,20 @@ class GameEngine {
     updateCooldowns() {
         if (this.isPaused) return;
         for(let key in this.cooldowns) {
-            if(this.cooldowns[key] > 0) {
-                this.cooldowns[key] -= 0.1;
-                this.updateCooldownUI(key);
-            }
+            if(this.cooldowns[key] > 0) { this.cooldowns[key] -= 0.1; this.updateCooldownUI(key); }
         }
         if(this.frenzyMode) {
             this.frenzyTimer -= 0.1;
-            if(this.frenzyTimer <= 0) {
-                this.frenzyMode = false;
-                document.getElementById('frenzy-fx').style.opacity = 0;
-            }
+            if(this.frenzyTimer <= 0) { this.frenzyMode = false; document.getElementById('frenzy-fx').style.opacity = 0; }
         }
     }
     updateCooldownUI(type) {
         const btn = document.getElementById(`btn-ad-${type}`);
         const overlay = document.getElementById(`cd-${type}`);
         if(this.cooldowns[type] > 0) {
-            btn.disabled = true;
-            overlay.style.height = `${(this.cooldowns[type] / 15) * 100}%`;
+            btn.disabled = true; overlay.style.height = `${(this.cooldowns[type] / 15) * 100}%`;
         } else {
-            btn.disabled = false;
-            overlay.style.height = '0%';
+            btn.disabled = false; overlay.style.height = '0%';
         }
     }
 
@@ -839,49 +657,27 @@ class GameEngine {
             if(saved.grid) saved.grid.forEach((lvl, i) => { if(lvl > 0) this.spawnMonster(i, lvl, false); });
             if(saved.maxLevel) this.updateHighestLevel(saved.maxLevel);
         } else {
-            this.spawnMonster(0, 1, false);
-            this.spawnMonster(1, 1, false);
-            this.updateHighestLevel(1);
+            this.spawnMonster(0, 1, false); this.spawnMonster(1, 1, false); this.updateHighestLevel(1);
         }
         this.updateUI();
         window.addEventListener('click', () => sdk.notifyGameplayStart(), {once: true});
-        this.isRunning = true;
-        this.loop(0);
+        this.isRunning = true; this.loop(0);
         setInterval(() => this.generateIncome(), 3000);
         setInterval(() => this.saveGame(), 5000);
     }
 
     pauseGame() { this.isPaused = true; }
-    resumeGame() { 
-        this.isPaused = false; 
-        if(!this.isRunning) { 
-            this.isRunning = true; 
-            this.lastTime = performance.now(); 
-            requestAnimationFrame(this.loop); 
-        } 
-    }
+    resumeGame() { this.isPaused = false; if(!this.isRunning) { this.isRunning = true; this.lastTime = performance.now(); requestAnimationFrame(this.loop); } }
 
     resize() {
         const wrapper = document.getElementById('canvas-wrapper');
         if (!wrapper) return;
         const rect = wrapper.getBoundingClientRect();
-        const availableW = rect.width;
-        const availableH = rect.height;
-        const targetRatio = 0.8; 
-        let finalW, finalH;
-        if (availableW / availableH > targetRatio) {
-            finalH = availableH * 0.95;
-            finalW = finalH * targetRatio;
-        } else {
-            finalW = availableW * 0.95;
-            finalH = finalW / targetRatio;
-        }
-        this.canvas.style.width = `${finalW}px`;
-        this.canvas.style.height = `${finalH}px`;
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = finalW * dpr;
-        this.canvas.height = finalH * dpr;
-        this.ctx.scale(dpr, dpr);
+        const finalW = rect.width; const finalH = rect.height;
+        this.canvas.width = finalW * (window.devicePixelRatio || 1);
+        this.canvas.height = finalH * (window.devicePixelRatio || 1);
+        this.ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+        this.canvas.style.width = `${finalW}px`; this.canvas.style.height = `${finalH}px`;
         
         const minDim = Math.min(finalW, finalH);
         const safeDim = Math.max(1, minDim - (this.padding * (this.gridSize + 1)));
@@ -914,16 +710,9 @@ class GameEngine {
     }
 
     spawnMonster(index, level, animate) {
-        this.slots[index] = {
-            level: level,
-            scale: animate ? 0 : 1,
-            targetScale: 1,
-            idleOffset: Math.random() * 100,
-            visible: true
-        };
+        this.slots[index] = { level: level, scale: animate ? 0 : 1, targetScale: 1, idleOffset: Math.random() * 100, visible: true };
         if(animate) this.createParticles(index, '#fff');
     }
-    
     countMonsters() { return this.slots.filter(s => s !== null).length; }
 
     generateIncome() {
@@ -938,14 +727,11 @@ class GameEngine {
                 s.scale = 1.3;
             }
         });
-        if(total > 0) { 
-            if(total > 0) audio.play('coin'); 
-            this.coins += total; 
-            this.updateUI(); 
-        }
+        if(total > 0) { if(total > 0) audio.play('coin'); this.coins += total; this.updateUI(); }
     }
     
     updateHighestLevel(lvl) {
+        // [LOGIC FIX] Only show "NEW RECORD" overlay if it's truly a new max level
         if (lvl > this.highestLevel) {
             this.highestLevel = lvl;
             this.showNewRecord(lvl);
@@ -957,127 +743,69 @@ class GameEngine {
         this.updateUI(); 
     }
     
+    // [VISUAL] Special effect for New Max Level
     showNewRecord(lvl) {
         audio.play('record');
         const overlay = document.createElement('div');
         overlay.className = 'record-overlay';
-        overlay.innerHTML = `<div class="record-title">NEW RECORD!</div><div class="celebration-sub" style="font-size: 80px; color: #fff;">Lvl ${lvl}</div>`;
+        overlay.innerHTML = `<div class="record-title">NEW RECORD!</div><div class="celebration-sub">Lvl ${lvl}</div>`;
         document.body.appendChild(overlay);
-        setTimeout(() => overlay.remove(), 3000);
+        setTimeout(() => overlay.remove(), 3500);
         
-        // 粒子爆发
+        // Massive Fireworks
         for(let i=0; i<100; i++) {
             this.particles.push({
                 x: (this.canvas.width/window.devicePixelRatio)/2,
                 y: (this.canvas.height/window.devicePixelRatio)/2,
-                vx: (Math.random()-0.5)*30,
-                vy: (Math.random()-0.5)*30,
-                life: 2.0,
-                size: Math.random()*15+5,
-                color: `hsl(${Math.random()*360}, 100%, 70%)`
-            });
-        }
-    }
-    
-    showCelebration(lvl) {
-        audio.play('levelup');
-        const div = document.createElement('div');
-        div.className = 'celebration-text';
-        div.innerHTML = `<div>升级啦! (Up)</div><div class="celebration-sub">${lvl}</div>`;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 2500);
-        
-        for(let i=0; i<60; i++) {
-            this.particles.push({
-                x: (this.canvas.width/window.devicePixelRatio)/2,
-                y: (this.canvas.height/window.devicePixelRatio)/2,
-                vx: (Math.random()-0.5)*25,
-                vy: (Math.random()-0.5)*25,
-                life: 1.5,
-                size: Math.random()*10+5,
-                color: `hsl(${Math.random()*360}, 100%, 60%)`
+                vx: (Math.random()-0.5)*30, vy: (Math.random()-0.5)*30, life: 2.5, size: Math.random()*15+5, color: `hsl(${Math.random()*360}, 100%, 70%)`
             });
         }
     }
 
-    // [MOD] DOM 礼物系统
     spawnGift() {
-        // 创建礼物元素
         const gift = document.createElement('div');
-        gift.className = 'flying-gift';
-        gift.innerText = '🎁';
-        
-        // 随机高度 (5% ~ 60% 屏幕高度)
+        gift.className = 'flying-gift'; gift.innerText = '🎁';
         const top = 5 + Math.random() * 55;
-        gift.style.top = top + '%';
-        gift.style.left = '-100px';
-        
-        // 速度
+        gift.style.top = top + '%'; gift.style.left = '-100px';
         const speed = 2 + Math.random() * 2;
-        
-        // 数据绑定到元素
-        gift.dataset.x = -100;
-        gift.dataset.speed = speed;
-        
-        // 点击事件
+        gift.dataset.x = -100; gift.dataset.speed = speed;
         gift.onclick = () => {
             audio.play('levelup'); 
-            // 奖励逻辑
             if(Math.random() > 0.7) {
-                this.frenzyMode = true;
-                this.frenzyTimer = 10; 
+                this.frenzyMode = true; this.frenzyTimer = 10; 
                 document.getElementById('frenzy-fx').style.opacity = 1;
-                this.addFloatingText(-1, `狂热模式 (FRENZY)!`, '#ff4757');
+                toast("Frenzy Mode!");
             } else {
                 const reward = this.getCost() * 5; 
                 this.coins += reward;
-                this.addFloatingText(-1, `+${formatNumber(reward)}`, '#2ed573');
+                toast(`Bonus: +${formatNumber(reward)}`);
             }
-            // 移除礼物
             if(gift.parentNode) gift.parentNode.removeChild(gift);
         };
-        
         this.giftLayer.appendChild(gift);
     }
 
     updateGift() {
         if (this.isPaused) return;
-        
-        // 礼物生成控制
         this.giftTimer++;
-        if(this.giftTimer > 1000) { 
-            this.giftTimer = 0; 
-            if(Math.random() > 0.4) this.spawnGift(); 
-        }
-        
-        // 移动所有礼物
+        if(this.giftTimer > 1000) { this.giftTimer = 0; if(Math.random() > 0.4) this.spawnGift(); }
         const gifts = document.getElementsByClassName('flying-gift');
         const screenW = window.innerWidth;
-        
         for (let i = 0; i < gifts.length; i++) {
             const gift = gifts[i];
             let x = parseFloat(gift.dataset.x);
             let speed = parseFloat(gift.dataset.speed);
-            
-            x += speed;
-            gift.dataset.x = x;
-            gift.style.transform = `translateX(${x}px) rotate(${Math.sin(x*0.05)*5}deg)`; // 增加摆动
-            
-            // 超出屏幕移除
-            if (x > screenW + 100) {
-                gift.parentNode.removeChild(gift);
-                i--; // 调整索引
-            }
+            x += speed; gift.dataset.x = x;
+            gift.style.transform = `translateX(${x}px) rotate(${Math.sin(x*0.05)*5}deg)`;
+            if (x > screenW + 100) { gift.parentNode.removeChild(gift); i--; }
         }
     }
 
     getSlotAt(x, y) {
         const rect = this.canvas.getBoundingClientRect();
-        const cx = x - rect.left;
-        const cy = y - rect.top;
+        const cx = x - rect.left; const cy = y - rect.top;
         for(let i=0; i<this.slots.length; i++) {
-            const col = i % this.gridSize;
-            const row = Math.floor(i / this.gridSize);
+            const col = i % this.gridSize; const row = Math.floor(i / this.gridSize);
             const sx = this.offsetX + col * (this.slotSize + this.padding);
             const sy = this.offsetY + row * (this.slotSize + this.padding);
             if(cx > sx && cx < sx + this.slotSize && cy > sy && cy < sy + this.slotSize) return i;
@@ -1088,43 +816,28 @@ class GameEngine {
     handleInputDown(e) {
         if(!this.isRunning || this.isPaused) return;
         if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
-
         const rect = this.canvas.getBoundingClientRect();
-        const relX = e.clientX - rect.left;
-        const relY = e.clientY - rect.top;
-        
+        const relX = e.clientX - rect.left; const relY = e.clientY - rect.top;
         const idx = this.getSlotAt(e.clientX, e.clientY);
         if(idx !== -1 && this.slots[idx]) {
-            this.dragOriginIndex = idx;
-            this.draggedMonster = this.slots[idx];
-            
-            // 启动 DOM 拖拽代理
-            this.proxyImg.src = AssetManager.getUrl(this.draggedMonster.level); // [FIX] 使用 blob URL
+            this.dragOriginIndex = idx; this.draggedMonster = this.slots[idx];
+            this.proxyImg.src = AssetManager.getUrl(this.draggedMonster.level);
             this.dragProxy.style.display = 'block';
-            this.dragProxy.style.left = (e.clientX - 40) + 'px';
-            this.dragProxy.style.top = (e.clientY - 40) + 'px';
-            
+            this.dragProxy.style.left = (e.clientX - 40) + 'px'; this.dragProxy.style.top = (e.clientY - 40) + 'px';
             this.slots[idx].visible = false; 
             audio.play('buy');
-            
-            // 显示底部垃圾桶
-            this.trashBar.classList.add('visible');
-            this.bottomBar.classList.add('hidden');
+            this.trashBar.classList.add('visible'); this.bottomBar.classList.add('hidden');
         }
     }
     
     handleInputMove(e) {
         if(this.draggedMonster) {
-            this.dragProxy.style.left = (e.clientX - 40) + 'px';
-            this.dragProxy.style.top = (e.clientY - 40) + 'px';
-            
+            this.dragProxy.style.left = (e.clientX - 40) + 'px'; this.dragProxy.style.top = (e.clientY - 40) + 'px';
             const trashRect = this.trashBar.getBoundingClientRect();
             if(e.clientY > trashRect.top) {
-                this.trashHover = true;
-                this.trashBar.classList.add('active');
+                this.trashHover = true; this.trashBar.classList.add('active');
             } else {
-                this.trashHover = false;
-                this.trashBar.classList.remove('active');
+                this.trashHover = false; this.trashBar.classList.remove('active');
             }
         }
     }
@@ -1132,78 +845,59 @@ class GameEngine {
     handleInputUp(e) {
         if(this.draggedMonster) {
             this.dragProxy.style.display = 'none';
-            this.trashBar.classList.remove('visible');
-            this.trashBar.classList.remove('active');
+            this.trashBar.classList.remove('visible'); this.trashBar.classList.remove('active');
             this.bottomBar.classList.remove('hidden');
 
             if(this.trashHover) {
                 audio.play('trash'); 
                 const refund = Math.floor(this.getCost() * 0.2);
                 this.coins += refund;
-                this.addFloatingText(-1, `出售 +${formatNumber(refund)}`, '#70a1ff');
-                // 粒子
+                this.addFloatingText(-1, `Sold +${formatNumber(refund)}`, '#70a1ff');
                 const trashRect = this.trashBar.getBoundingClientRect();
                 const canvasRect = this.canvas.getBoundingClientRect();
                 const px = (trashRect.left + trashRect.width/2 - canvasRect.left);
                 const py = (trashRect.top - 20 - canvasRect.top);
                 this.createParticles(-1, '#57606f', px, py);
-                
-                this.slots[this.dragOriginIndex] = null; // 确认删除
+                this.slots[this.dragOriginIndex] = null;
                 this.trashHover = false;
             } else {
                 const rect = this.canvas.getBoundingClientRect();
                 const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
                 const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-                
                 if(clientX > rect.left && clientX < rect.right && clientY > rect.top && clientY < rect.bottom) {
                     const targetIdx = this.getSlotAt(clientX, clientY);
                     if(targetIdx !== -1) {
                         const target = this.slots[targetIdx];
                         if(target === null) {
-                            this.draggedMonster.visible = true;
-                            this.slots[targetIdx] = this.draggedMonster;
-                            this.slots[this.dragOriginIndex] = null;
+                            this.draggedMonster.visible = true; this.slots[targetIdx] = this.draggedMonster; this.slots[this.dragOriginIndex] = null;
                         } else if (target !== this.draggedMonster && target.level === this.draggedMonster.level && target.level < this.MAX_LEVEL) {
                             audio.play('merge'); 
-                            this.slots[targetIdx].level++;
-                            this.slots[targetIdx].scale = 1.5;
+                            this.slots[targetIdx].level++; this.slots[targetIdx].scale = 1.5;
                             this.createParticles(targetIdx, '#FFD700');
                             
-                            if(this.slots[targetIdx].level > this.highestLevel) {
-                                this.updateHighestLevel(this.slots[targetIdx].level);
-                            } else {
-                                this.addFloatingText(targetIdx, '升级!', '#ff4757');
-                                this.showCelebration(this.slots[targetIdx].level);
+                            // [LOGIC] Only show overlay for New Record, otherwise just floating text
+                            if(this.slots[targetIdx].level > this.highestLevel) { 
+                                this.updateHighestLevel(this.slots[targetIdx].level); 
+                            } else { 
+                                this.addFloatingText(targetIdx, 'Level Up!', '#ff4757'); 
                             }
                             
                             if(this.slots[targetIdx].level >= 4) setTimeout(() => sdk.showInterstitial(), 800);
                             this.slots[this.dragOriginIndex] = null;
                             this.saveGame();
-                        } else {
-                            this.slots[this.dragOriginIndex].visible = true;
-                        }
-                    } else {
-                        this.slots[this.dragOriginIndex].visible = true;
-                    }
-                } else {
-                    this.slots[this.dragOriginIndex].visible = true;
-                }
+                        } else { this.slots[this.dragOriginIndex].visible = true; }
+                    } else { this.slots[this.dragOriginIndex].visible = true; }
+                } else { this.slots[this.dragOriginIndex].visible = true; }
             }
-            this.draggedMonster = null;
-            this.dragOriginIndex = -1;
-            this.updateUI();
+            this.draggedMonster = null; this.dragOriginIndex = -1; this.updateUI();
         }
     }
 
     loop(timestamp) {
         if(!this.isRunning) return;
-        const dt = timestamp - this.lastTime;
-        this.lastTime = timestamp;
-        if(!this.isPaused) {
-            this.update(dt);
-        }
-        this.draw();
-        requestAnimationFrame(this.loop);
+        const dt = timestamp - this.lastTime; this.lastTime = timestamp;
+        if(!this.isPaused) { this.update(dt); }
+        this.draw(); requestAnimationFrame(this.loop);
     }
     update(dt) {
         this.updateGift(); 
@@ -1213,28 +907,20 @@ class GameEngine {
     }
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Grid
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         for(let i=0; i<this.gridSize*this.gridSize; i++) {
             const {x, y} = this.getSlotPos(i);
-            this.ctx.beginPath(); 
-            this.ctx.roundRect(x, y, this.slotSize, this.slotSize, 15);
-            this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.roundRect(x, y, this.slotSize, this.slotSize, 15); this.ctx.fill();
         }
-        
         this.slots.forEach((s, i) => { if(s && s.visible) { const {x, y} = this.getSlotPos(i); this.drawMonster(s, x, y); } });
-        
         this.particles.forEach(p => { this.ctx.fillStyle = p.color; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); this.ctx.fill(); });
         this.ctx.font = 'bold 24px "Fredoka One"'; this.ctx.textAlign = 'center';
         this.floatingTexts.forEach(t => {
             this.ctx.fillStyle = `rgba(255, 255, 255, ${t.alpha})`;
             this.ctx.strokeStyle = `rgba(0, 0, 0, ${t.alpha * 0.5})`;
             this.ctx.lineWidth = 3;
-            let tx = t.x;
-            if(t.text.includes('!')) tx = this.canvas.width/this.ctx.getTransform().a / 2; 
-            this.ctx.strokeText(t.text, tx, t.y);
-            this.ctx.fillText(t.text, tx, t.y);
+            let tx = t.x; if(t.text.includes('!')) tx = this.canvas.width/this.ctx.getTransform().a / 2; 
+            this.ctx.strokeText(t.text, tx, t.y); this.ctx.fillText(t.text, tx, t.y);
         });
     }
 
@@ -1277,11 +963,11 @@ class GameEngine {
         const gridData = this.slots.map(s => s ? s.level : 0);
         sdk.saveData({ coins: this.coins, grid: gridData, maxLevel: this.highestLevel });
     }
-    boostSpeed() { this.frenzyMode = true; this.frenzyTimer = 20; document.getElementById('frenzy-fx').style.opacity = 1; this.addFloatingText(-1, "加速冲刺!", "#feca57"); }
+    boostSpeed() { this.frenzyMode = true; this.frenzyTimer = 20; document.getElementById('frenzy-fx').style.opacity = 1; toast("Frenzy Mode On!"); }
     autoMerge() { 
         this.coins += this.getCost() * 5; 
         this.updateUI(); 
-        this.addFloatingText(-1, "现金奖励!", "#feca57"); 
+        toast("Bonus Cash!");
     }
 }
 
